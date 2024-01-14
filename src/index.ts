@@ -6,6 +6,8 @@ const store = {
     x: 0
 }
 
+app.use(express.static('public'))
+
 app.get('/', (req, res) => {
   res.json(store)
   store.x +=  1
