@@ -1,6 +1,7 @@
-import express from 'express'
+import express, { urlencoded, json } from 'express'
 import config from './config'
 import { dbConnect } from './database'
+import { Country } from './models/Country'
 
 async function main(): Promise<void> {
   const app = express()
@@ -8,6 +9,7 @@ async function main(): Promise<void> {
   const host = config.app.host
   
   await dbConnect()
+  await Country.sync()
 
   const store = {
       x: 0
@@ -29,7 +31,10 @@ async function main(): Promise<void> {
   
   
   app.use(express.static('public'))
-  
+  app.use(json())
+  app.use(urlencoded({ extended: true}))
+
+
   app.get('/api/count', (req, res) => {
     res.json(store)
     store.x +=  1
@@ -38,11 +43,32 @@ async function main(): Promise<void> {
   app.get("/api/data", (req, res) => {
     res.json(data)
   })
+
+  app.get("/countries", async (req, res) => {
+    res.json(await Country.findAll())
+  })
+
+  app.post("/countries", async (req, res) => {
+    const country = await Country.create({
+      name: req.body.name,
+      capital: req.body.capital,
+    })
+    res.json(country)
+  })
   
   app.get("/welcome", (req, res) => {
     res.send("Hello world")
   });
   
+  app.delete('/country/:id', async (req, res) => {
+    const country = await Country.destroy({
+      where: {
+        id: req.params.id,
+      }
+    })
+    res.json(country)
+  })
+
   app.listen(port, () => {
     console.log(`Server is running on http://${host}:${port}`)
   })
